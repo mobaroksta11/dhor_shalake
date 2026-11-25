@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/Dhor%20Shala%20Ke%20game%20file.html" }
+  ]
+}
