@@ -25,10 +25,10 @@ window.ASSETS2 = {"cut": {"imran": {"file": "data:image/webp;base64,UklGRq6XAABX
   #distBox { font-size:18px; font-weight:700; text-align:right; }
   #distBox small { display:block; font-size:12px; color:#cfd8ff; font-weight:600; }
   #stars { color:#ffb300; font-size:17px; letter-spacing:2px; }
-  #dangerWrap { position:fixed; top:86px; left:50%; transform:translateX(-50%); width:min(430px,72vw); display:none; z-index:20; }
-  #dangerWrap label { display:block; text-align:center; font-size:13px; font-weight:700; color:#ff8a80; text-shadow:0 1px 3px #000; margin-bottom:3px; }
-  #dangerOuter { height:14px; background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.35); border-radius:8px; overflow:hidden; }
-  #dangerFill { height:100%; width:0%; background:linear-gradient(90deg,#ffb300,#ff5722,#e53935); transition:width .18s; }
+  #livesBox { font-size:18px; font-weight:700; text-align:center; }
+  #livesBox small { display:block; font-size:12px; color:#cfd8ff; font-weight:600; }
+  #livesVal { color:#ff5252; letter-spacing:2px; font-size:17px; }
+  #hitFlash { position:fixed; inset:0; pointer-events:none; z-index:45; opacity:0; background:radial-gradient(ellipse at center, rgba(255,0,0,0) 42%, rgba(213,0,0,.55) 100%); }
   #ledgerBtn { cursor:pointer; font-family:inherit; color:#fff; font-size:15px; font-weight:700; }
   #ledgerPanel { position:fixed; top:140px; right:12px; width:min(300px,80vw); max-height:52vh; overflow-y:auto; background:rgba(8,12,28,.92); border:1px solid rgba(255,255,255,.22); border-radius:14px; padding:12px 14px; display:none; z-index:30; }
   #ledgerPanel h3 { font-size:17px; color:#ffd94d; margin-bottom:6px; }
@@ -126,13 +126,14 @@ window.ASSETS2 = {"cut": {"imran": {"file": "data:image/webp;base64,UklGRq6XAABX
 <div id="hud">
   <div class="hudBox" id="pointsBox"><small>Points</small><span id="pointsVal">0</span></div>
   <div class="hudBox"><div id="stars">☆☆☆☆☆</div></div>
+  <div class="hudBox" id="livesBox"><small>জীবন</small><span id="livesVal">❤❤❤</span></div>
   <div class="hudBox" id="distBox"><small>দূরত্ব</small><span id="distVal">0 মিটার</span></div>
   <button class="hudBox" id="ledgerBtn">📒 খাতা</button>
 </div>
-<div id="dangerWrap"><label>ধরা পড়ার ঝুঁকি</label><div id="dangerOuter"><div id="dangerFill"></div></div></div>
 <div id="ledgerPanel"><h3>📒 টাকার খাতা</h3><ul id="ledgerList"></ul><div class="ltotal" id="ledgerTotal"></div></div>
 <div id="chaseBubble">ওই শালাকে ধর!</div>
 <div id="toast"></div>
+<div id="hitFlash"></div>
 
 <!-- touch controls -->
 <div id="touchBtns">
@@ -356,13 +357,15 @@ function approach(v, target, maxDelta){ if (v < target) return Math.min(target, 
 
 /* ================= STATE ================= */
 var state = 'title'; /* title | run | dialogue | caught */
-var points = 0, distance = 0, danger = 0;
+var points = 0, distance = 0, lives = 3;
 var lane = 1, playerX = 0, prevPlayerX = 0, playerVX = 0, jumpY = 0, vy = 0;
 var stumbleT = 0, invulnT = 0, runTime = 0;
 var ledger = [];
 var eventQueue = [], eventIndex = 0, nextEventAt = 300, eventPerson = null, currentEvent = null;
 var chasers = [], chaseBubbleT = 0;
 var dlg = null, lastScamEvent = null;
+var vehicles = [], fallPair = [], fallT = 0;
+var dlgPairX = 6.6, worldScrollTotal = 0, vehOwnScale = 1;
 
 /* ================= THREE SETUP ================= */
 var scene = new THREE.Scene();
@@ -916,7 +919,7 @@ function makeRickshaw(){
 /* ================= WORLD ================= */
 var LANES = [-3.4, 0, 3.4];
 var SEG_LEN = 20, SEG_COUNT = 14, WORLD_LEN = SEG_LEN * SEG_COUNT;
-var segments = [], obstacles = [];
+var segments = [];
 var player = null;
 
 var ground = null;
@@ -972,23 +975,102 @@ function makeSegment(idx){
   scene.add(g);
   return g;
 }
-function spawnObstacle(seg){
+/* ================= ONCOMING TRAFFIC =================
+   Vehicles are top-level scene objects that drive TOWARD the player:
+   they spawn far ahead, face him (car headlights / rickshaw driver end
+   toward the camera) and stream past. Closing speed is the player's
+   ground speed plus the vehicle's own engine speed. The player dodges
+   by switching lanes; a vehicle in his lane at ground level costs
+   exactly one life. */
+var VEH_COUNT = 7;
+function makeVehicle(z){
   var kind = Math.random() < 0.5 ? 'rickshaw' : 'car';
-  var ob = kind === 'rickshaw' ? makeRickshaw() : makeCar();
-  ob.userData.lane = randi(0, 2);
-  ob.position.set(LANES[ob.userData.lane], 0, rand(-7, 7));
-  if (kind === 'car' && Math.random() < 0.5) ob.rotation.y = Math.PI;
-  ob.userData.kind = kind;
-  seg.add(ob);
-  obstacles.push({ mesh: ob, seg: seg });
-  return ob;
+  var v = kind === 'rickshaw' ? makeRickshaw() : makeCar();
+  if (kind === 'car') v.rotation.y = Math.PI; /* front toward the player */
+  v.userData.kind = kind;
+  v.userData.lane = randi(0, 2);
+  v.userData.own = rand(5, 8.5);
+  v.position.set(LANES[v.userData.lane], 0, z);
+  scene.add(v);
+  vehicles.push(v);
+  return v;
+}
+function initVehicles(){
+  vehicles.forEach(function(v){ scene.remove(v); });
+  vehicles = [];
+  for (var i = 0; i < VEH_COUNT; i++) makeVehicle(rand(-185, -25));
+}
+function respawnVehicle(v){
+  v.userData.lane = randi(0, 2);
+  v.userData.own = rand(5, 8.5);
+  var z = rand(-195, -160);
+  for (var i = 0; i < vehicles.length; i++){
+    var o = vehicles[i];
+    if (o !== v && o.userData.lane === v.userData.lane && Math.abs(o.position.z - z) < 16) z = o.position.z - 18;
+  }
+  v.position.set(LANES[v.userData.lane], 0, z);
+}
+function updateVehicles(dt, baseSpeed, canHit){
+  for (var i = 0; i < vehicles.length; i++){
+    var v = vehicles[i];
+    v.position.z += (baseSpeed + v.userData.own * vehOwnScale) * dt;
+    if (v.position.z > 16){ respawnVehicle(v); continue; }
+    if (canHit && invulnT <= 0 && Math.abs(v.position.z) < 1.3 && v.userData.lane === lane && jumpY < 0.75){
+      onVehicleHit();
+    }
+  }
+}
+function onVehicleHit(){
+  lives--;
+  stumbleT = 0.7;
+  invulnT = 1.5;
+  updateHUD();
+  var hf = el('hitFlash');
+  hf.style.transition = 'none';
+  hf.style.opacity = '1';
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){
+    hf.style.transition = 'opacity .55s';
+    hf.style.opacity = '0';
+  }); });
+  if (lives <= 0) startFall();
+  else showToast('ধাক্কা খেলে! আর ' + lives + 'টা জীবন বাকি', 1500);
+}
+/* ================= THE FALL =================
+   Third hit: Imran goes down on the asphalt, traffic brakes to a stop,
+   and the police plus the last scammed person run in and surround him.
+   Then the regular BUSTED scene takes over. */
+function startFall(){
+  state = 'fall';
+  fallT = 0;
+  if (player){
+    player.userData.loco.target = 0;
+    player.visible = true;
+  }
+  el('chaseBubble').style.display = 'none';
+  showToast('ধরা পড়ে গেলে!', 1600);
+}
+function spawnFallPair(){
+  var catcher = lastScamEvent || { name: 'ধরে ফেলা লোকটা', cut: 'dokandar', run: 'dokandar' };
+  var p = makeFigure('police', 'police');
+  p.position.set(playerX - 1.5, 0, -17);
+  scene.add(p); fallPair.push(p);
+  var c = makeFigure(catcher.run, catcher.cut);
+  c.position.set(playerX + 1.6, 0, -18.5);
+  scene.add(c); fallPair.push(c);
+}
+function scrollSegments(spd, dt){
+  worldScrollTotal += spd * dt;
+  segments.forEach(function(seg){
+    seg.position.z += spd * dt;
+    if (seg.position.z > SEG_LEN * 2) seg.position.z -= WORLD_LEN;
+  });
 }
 function buildWorld(){
   initFacadePool();
   makeGround();
   buildWantedTexture();
   for (var si = 0; si < SEG_COUNT; si++) segments.push(makeSegment(si));
-  segments.forEach(function(seg, i){ if (i > 1 && Math.random() < 0.75) spawnObstacle(seg); if (Math.random() < 0.3) spawnObstacle(seg); });
+  initVehicles();
   player = makeFigure('imranback', 'imran');
   player.userData.loco.accel = 8.5;
   scene.add(player);
@@ -1027,7 +1109,9 @@ el('btnJump').addEventListener('click', doJump);
 function updateHUD(){
   el('pointsVal').textContent = fmt(points);
   el('distVal').textContent = fmt(Math.floor(distance)) + ' মিটার';
-  el('dangerFill').style.width = Math.min(100, danger) + '%';
+  var lv = '';
+  for (var li = 0; li < 3; li++) lv += li < lives ? '❤' : '🖤';
+  el('livesVal').textContent = lv;
   var stars = points <= 0 ? 0 : Math.min(5, 1 + Math.floor(points / 30000));
   var s = ''; for (var i = 0; i < 5; i++) s += i < stars ? '★' : '☆';
   el('stars').textContent = s;
@@ -1093,7 +1177,11 @@ function setSpeaker(who){
 function startDialogue(){
   state = 'dialogue';
   /* the DOM pair carries the conversation; the in-world runner left standing
-     mid-road reads as a stray mini Imran between the two speakers */
+     mid-road reads as a stray mini Imran between the two speakers.
+     The pair stands at the ROADSIDE on the side the person came from;
+     traffic keeps flowing on the road beside them (see the dialogue
+     branch of stepSim) and can never reach them there. */
+  dlgPairX = (eventPerson && eventPerson.position.x < 0) ? -6.6 : 6.6;
   if (player) player.visible = false;
   dlg = { ev: currentEvent, idx: -1, phase: 'talk' };
   el('imgR').src = cutFile(currentEvent.cut);
@@ -1188,6 +1276,7 @@ function doCaught(){
      behind the scene stays empty and the moment reads as one tight group */
   if (player) player.visible = false;
   chasers.forEach(function(c){ c.visible = false; });
+  fallPair.forEach(function(f){ f.visible = false; });
   var catcher = lastScamEvent || { name: 'ধরে ফেলা লোকটা', cut: 'dokandar' };
   el('imgCCatcher').src = cutFile(catcher.cut);
   el('whoCCatcher').textContent = catcher.name;
@@ -1213,7 +1302,9 @@ function doCaught(){
 
 /* ================= START AND RESET ================= */
 function resetGame(){
-  points = 0; distance = 0; danger = 0;
+  points = 0; distance = 0; lives = 3;
+  fallPair.forEach(function(f){ scene.remove(f); });
+  fallPair = []; fallT = 0; vehOwnScale = 1;
   lane = 1; playerX = 0; prevPlayerX = 0; playerVX = 0; jumpY = 0; vy = 0; runTime = 0;
   stumbleT = 0; invulnT = 0; ledger = []; eventIndex = 0;
   nextEventAt = rand(250, 400); currentEvent = null; dlg = null; lastScamEvent = null;
@@ -1222,6 +1313,7 @@ function resetGame(){
   if (player){
     player.visible = true;
     player.userData.loco.speed = 0; player.userData.loco.target = 0;
+    player.userData.rig.rotation.x = 0;
     player.position.set(0, 0, 0);
     setFigureIdle(player);
   }
@@ -1234,24 +1326,42 @@ function startRun(){
   el('titleScreen').style.display = 'none';
   el('caught').style.display = 'none';
   el('hud').style.display = 'flex';
-  el('dangerWrap').style.display = 'block';
   el('touchBtns').classList.add('on');
   state = 'run';
 }
 el('startBtn').addEventListener('click', startRun);
 el('restartBtn').addEventListener('click', startRun);
 
-/* ================= MAIN LOOP ================= */
+/* ================= MAIN LOOP =================
+   Fixed-timestep simulation: the world advances in exact 1/120 s steps
+   fed from an accumulator, so every motion is a deterministic function
+   of game time. A device rendering at 20 fps and one at 60 fps produce
+   the same smooth movement; with the old variable-dt loop a single long
+   frame lurched the whole scene (the "everything shakes" bug). */
 var clock = new THREE.Clock();
-var clockT = 0;
+var simNow = 0, stepAcc = 0;
+var STEP = 1 / 120;
 function animate(){
   requestAnimationFrame(animate);
-  var dt = Math.min(clock.getDelta(), 0.05);
-  clockT = clock.elapsedTime;
-  var now = clockT;
-
+  var rdt = Math.min(clock.getDelta(), 0.1);
   if (worldReady && player){
-    if (state === 'run'){
+    stepAcc += rdt;
+    var steps = 0;
+    while (stepAcc >= STEP && steps < 20){
+      stepSim(STEP);
+      stepAcc -= STEP;
+      simNow += STEP;
+      steps++;
+    }
+    if (steps === 20) stepAcc = 0;
+    camera.position.set(playerX * 0.55, 5.3 + jumpY * 0.35, 8.8);
+    camera.lookAt(playerX * 0.7, 1.5, -9);
+  }
+  renderer.render(scene, camera);
+}
+function stepSim(dt){
+  var now = simNow;
+  if (state === 'run'){
       runTime += dt;
       if (stumbleT > 0) stumbleT -= dt;
       if (invulnT > 0) invulnT -= dt;
@@ -1278,19 +1388,11 @@ function animate(){
       distance += spd * dt;
       player.position.set(playerX, jumpY, 0);
 
-      /* --- world scroll --- */
-      segments.forEach(function(seg){ seg.position.z += spd * dt; if (seg.position.z > SEG_LEN * 2) seg.position.z -= WORLD_LEN; });
-      obstacles.forEach(function(o){
-        var wz = o.seg.position.z + o.mesh.position.z;
-        if (invulnT <= 0 && Math.abs(wz) < 1.15 && o.mesh.userData.lane === lane && jumpY < 0.75){
-          stumbleT = 0.7; invulnT = 1.2;
-          danger = Math.min(100, danger + 22);
-          showToast('ধাক্কা খেলে! সামলে চলো', 1300);
-        }
-        if (o.mesh.userData.kind === 'rickshaw' && o.mesh.userData.driver){
-          o.mesh.userData.driver.rotation.y = Math.atan2(camera.position.x - (o.seg.position.x + o.mesh.position.x), camera.position.z - (o.seg.position.z + o.mesh.position.z));
-        }
-      });
+      /* --- world scroll + oncoming traffic --- */
+      scrollSegments(spd, dt);
+      updateVehicles(dt, spd, true);
+      /* invincibility blink after a hit */
+      player.visible = invulnT > 0 ? (Math.floor(now * 12) % 2 === 0) : true;
 
       /* --- event person approach --- */
       if (!eventPerson && distance >= nextEventAt) spawnEventPerson();
@@ -1306,11 +1408,10 @@ function animate(){
         }
       }
 
-      /* --- chasers share the locomotion system --- */
-      if (danger >= 100) doCaught();
+      /* --- chasers share the locomotion system: they chase and shout,
+         but proximity can never catch him any more --- */
       if (chasers.length){
-        danger = Math.max(0, danger - 5.5 * dt);
-        var cz = 3 + (danger / 100) * 7.5;
+        var cz = 6.4;
         chasers.forEach(function(c, i){
           var prevZ = c.position.z;
           c.position.z += (cz + i * 1.5 - c.position.z) * Math.min(1, dt * 2.2);
@@ -1327,15 +1428,47 @@ function animate(){
       updateHUD();
     }
     else if (state === 'dialogue'){
-      danger = Math.min(100, danger + dt * 2.1);
-      el('dangerFill').style.width = Math.min(100, danger) + '%';
-      player.userData.loco.target = 0;
-      updateFigure(player, dt, 0, false, 0, now);
+      /* The pair stands at the roadside and the world stays alive: the
+         road scrolls gently and oncoming traffic keeps streaming past
+         on the lanes beside them. Vehicles are confined to the lanes
+         (|x| <= 3.4 plus body width), the pair stands at |x| = 6.6,
+         so nothing can ever reach or hit them here. There is no risk
+         of any kind in this state. */
+      var flow = 8;
+      scrollSegments(flow, dt);
+      updateVehicles(dt, flow, false);
       chasers.forEach(function(c){
         c.userData.loco.target = 0;
         updateFigure(c, dt, 0, false, 0, now);
       });
-      if (danger >= 100) doCaught();
+    }
+    else if (state === 'fall'){
+      fallT += dt;
+      vehOwnScale = clamp(1 - fallT / 0.7, 0, 1);
+      var fspd = player.userData.loco.speed * vehOwnScale;
+      scrollSegments(fspd, dt);
+      updateVehicles(dt, fspd, false);
+      updateFigure(player, dt, 0, false, 0, now);
+      var fk = clamp(fallT / 0.45, 0, 1);
+      var fease = 1 - (1 - fk) * (1 - fk);
+      player.userData.rig.rotation.x = -Math.PI / 2 * fease;
+      player.position.set(playerX, 0.03, 0);
+      if (fallT > 0.85 && !fallPair.length) spawnFallPair();
+      fallPair.forEach(function(f, i){
+        var tx = playerX + (i === 0 ? -1.5 : 1.6);
+        var tz = i === 0 ? -2.9 : -3.3;
+        var dx = tx - f.position.x, dz = tz - f.position.z;
+        var dist = Math.sqrt(dx * dx + dz * dz);
+        var sp = clamp(dist * 2.2, 0, 7.5);
+        if (dist > 0.05){
+          f.position.x += dx / dist * sp * dt;
+          f.position.z += dz / dist * sp * dt;
+        }
+        f.userData.loco.target = sp;
+        f.userData.loco.speed = sp;
+        updateFigure(f, dt, sp, false, 0, now);
+      });
+      if (fallT > 3.1) doCaught();
     }
     else {
       player.userData.loco.target = 0;
@@ -1345,10 +1478,6 @@ function animate(){
         updateFigure(c, dt, 0, false, 0, now);
       });
     }
-    camera.position.set(playerX * 0.55, 5.3 + jumpY * 0.35, 8.8);
-    camera.lookAt(playerX * 0.7, 1.5, -9);
-  }
-  renderer.render(scene, camera);
 }
 buildEventQueue();
 updateHUD();
