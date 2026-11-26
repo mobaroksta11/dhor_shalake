@@ -28,6 +28,9 @@ window.ASSETS2 = {"cut": {"imran": {"file": "data:image/webp;base64,UklGRq6XAABX
   #livesBox { font-size:18px; font-weight:700; text-align:center; }
   #livesBox small { display:block; font-size:12px; color:#cfd8ff; font-weight:600; }
   #livesVal { color:#ff5252; letter-spacing:2px; font-size:17px; }
+  #coinBox { font-size:18px; font-weight:700; text-align:center; }
+  #coinBox small { display:block; font-size:12px; color:#cfd8ff; font-weight:600; }
+  #coinVal { color:#ffd94d; font-size:17px; }
   #hitFlash { position:fixed; inset:0; pointer-events:none; z-index:45; opacity:0; background:radial-gradient(ellipse at center, rgba(255,0,0,0) 42%, rgba(213,0,0,.55) 100%); }
   #ledgerBtn { cursor:pointer; font-family:inherit; color:#fff; font-size:15px; font-weight:700; }
   #ledgerPanel { position:fixed; top:140px; right:12px; width:min(300px,80vw); max-height:52vh; overflow-y:auto; background:rgba(8,12,28,.92); border:1px solid rgba(255,255,255,.22); border-radius:14px; padding:12px 14px; display:none; z-index:30; }
@@ -127,6 +130,7 @@ window.ASSETS2 = {"cut": {"imran": {"file": "data:image/webp;base64,UklGRq6XAABX
   <div class="hudBox" id="pointsBox"><small>Points</small><span id="pointsVal">0</span></div>
   <div class="hudBox"><div id="stars">☆☆☆☆☆</div></div>
   <div class="hudBox" id="livesBox"><small>জীবন</small><span id="livesVal">❤❤❤</span></div>
+  <div class="hudBox" id="coinBox"><small>🪙 কয়েন</small><span id="coinVal">0 টাকা</span></div>
   <div class="hudBox" id="distBox"><small>দূরত্ব</small><span id="distVal">0 মিটার</span></div>
   <button class="hudBox" id="ledgerBtn">📒 খাতা</button>
 </div>
@@ -145,7 +149,7 @@ window.ASSETS2 = {"cut": {"imran": {"file": "data:image/webp;base64,UklGRq6XAABX
 <div class="overlay" id="titleScreen">
   <h1>ধর শালাকে</h1>
   <h2>Dhor Shala Ke</h2>
-  <img id="titleImg" src="assets/cut-imran.png" alt="Goriber Belun Mask">
+  <img id="titleImg" alt="Goriber Belun Mask">
   <div style="font-size:clamp(16px,4.4vw,21px)">মূল চরিত্র <span class="charName">Goriber Belun Mask</span></div>
   <button class="bigBtn" id="startBtn" disabled>লোড হচ্ছে…</button>
   <div id="controlsBox">
@@ -154,6 +158,8 @@ window.ASSETS2 = {"cut": {"imran": {"file": "data:image/webp;base64,UklGRq6XAABX
     • লাফ দিতে Space অথবা ▲ চাপো<br>
     • মানুষের কাছে পৌঁছালে কথা শুরু হবে, click অথবা E চাপলে কথা এগিয়ে যাবে<br>
     • কথা বলে বিশ্বাস জিতলে টাকা মিলবে, যত বেশি টাকা তত বেশি Points<br>
+    • রাস্তার সোনার coin ছুঁলে ১টা করে coin টাকা জমবে<br>
+    • গাড়ি বা রিকশায় ধাক্কা খেলে পড়ে যাবে আর একটা জীবন কমবে, ৩টা জীবন শেষ হলেই ধরা<br>
     • phone এ swipe করো অথবা নিচের button চাপো
   </div>
 </div>
@@ -169,12 +175,12 @@ window.ASSETS2 = {"cut": {"imran": {"file": "data:image/webp;base64,UklGRq6XAABX
   <div id="dlgStage">
     <div class="dlgChar" id="charL">
       <div class="bubble" id="bubbleL"></div>
-      <img id="imgL" src="assets/cut-imran.png" alt="Imran">
+      <img id="imgL" alt="Imran">
       <div class="who">Goriber Belun Mask</div>
     </div>
     <div class="dlgChar" id="charR">
       <div class="bubble" id="bubbleR"></div>
-      <img id="imgR" src="assets/cut-kaief.png" alt="">
+      <img id="imgR" alt="">
       <div class="who" id="whoR">Kaief</div>
     </div>
   </div>
@@ -190,15 +196,15 @@ window.ASSETS2 = {"cut": {"imran": {"file": "data:image/webp;base64,UklGRq6XAABX
   <h1>BUSTED</h1>
   <div id="caughtStage">
     <div class="cChar side" id="cPolice">
-      <img id="imgCPolice" src="assets/run-police-1.png" alt="Police">
+      <img id="imgCPolice" alt="Police">
       <div class="who">Police</div>
     </div>
     <div class="cChar main" id="cImran">
-      <img id="imgCImran" src="assets/cut-imran-scared.png" alt="Imran">
+      <img id="imgCImran" alt="Imran">
       <div class="who">Goriber Belun Mask</div>
     </div>
     <div class="cChar main" id="cCatcher">
-      <img id="imgCCatcher" src="assets/run-dokandar-0.png" alt="">
+      <img id="imgCCatcher" alt="">
       <div class="who" id="whoCCatcher">ধরে ফেলা লোকটা</div>
     </div>
   </div>
@@ -364,8 +370,12 @@ var ledger = [];
 var eventQueue = [], eventIndex = 0, nextEventAt = 300, eventPerson = null, currentEvent = null;
 var chasers = [], chaseBubbleT = 0;
 var dlg = null, lastScamEvent = null;
-var vehicles = [], fallPair = [], fallT = 0;
+var vehicles = [], fallPair = [], fallT = 0, downT = 0;
 var dlgPairX = 6.6, worldScrollTotal = 0, vehOwnScale = 1;
+/* roadside dialogue spot: the marked pad on the sidewalk where the pair
+   stands, and the vehicle-free pocket guaranteed around it */
+var SPOT_Z = -2.6, SPOT_X = 6.6, spotSide = 1, spotMarker = null;
+var coins = [], coinTaka = 0, nextCoinAt = 120;
 
 /* ================= THREE SETUP ================= */
 var scene = new THREE.Scene();
@@ -479,18 +489,30 @@ function wrapText(ctx, text, x, y, maxW, lh){
 }
 var wantedTexture = null;
 function buildWantedTexture(){
-  var imranImg = TEX['assets/cut-imran.png'] ? TEX['assets/cut-imran.png'].image : null;
+  /* resolve Imran's portrait through the same helper the figures use:
+     the old code looked TEX up by a hardcoded dev path, which misses in
+     the single-file build (there the texture is keyed by its data URI),
+     leaving a dark blank oval on every WANTED board */
+  var imranTex = loadTex(cutFile('imran'));
+  var imranImg = (imranTex && imranTex.image && imranTex.image.width) ? imranTex.image : null;
   wantedTexture = textTexture(512, 640, function(ctx, w, h){
     ctx.fillStyle = '#f5eeda'; ctx.fillRect(0, 0, w, h);
     ctx.strokeStyle = '#8d1b1b'; ctx.lineWidth = 14; ctx.strokeRect(10, 10, w - 20, h - 20);
     ctx.fillStyle = '#b71c1c'; ctx.textAlign = 'center';
     ctx.font = 'bold 74px sans-serif'; ctx.fillText('WANTED', w / 2, 92);
-    ctx.fillStyle = '#263238'; ctx.beginPath(); ctx.arc(w / 2, 222, 82, 0, Math.PI * 2); ctx.fill();
+    /* light paper disc behind the portrait so the face reads at distance */
+    ctx.fillStyle = '#e9dcbc'; ctx.beginPath(); ctx.arc(w / 2, 222, 84, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#8d1b1b'; ctx.lineWidth = 5; ctx.stroke();
     if (imranImg){
+      /* tight square crop on the head and shoulders at the top of the
+         cutout, so the face fills the disc instead of a full-body figure
+         shrinking into a dark oval */
+      var iw = imranImg.width, ih = imranImg.height;
+      var side = Math.min(iw * 0.72, ih * 0.34);
+      var sx = (iw - side) / 2, sy = 0;
       ctx.save();
-      ctx.beginPath(); ctx.arc(w / 2, 222, 78, 0, Math.PI * 2); ctx.clip();
-      var iw = 250, ih = iw / (imranImg.width / imranImg.height);
-      ctx.drawImage(imranImg, w / 2 - iw / 2, 128, iw, ih);
+      ctx.beginPath(); ctx.arc(w / 2, 222, 80, 0, Math.PI * 2); ctx.clip();
+      ctx.drawImage(imranImg, sx, sy, side, side, w / 2 - 80, 222 - 80, 160, 160);
       ctx.restore();
     }
     ctx.fillStyle = '#17203a'; ctx.font = 'bold 37px sans-serif';
@@ -924,8 +946,13 @@ var player = null;
 
 var ground = null;
 function makeGround(){
+  /* the far ground is a FLAT colour with no texture: a repeating pattern
+     on a world-fixed plane stays screen-still while the street scrolls,
+     which sheared against the building bases. All textured ground near
+     the street now lives inside the segments (see the aprons in
+     makeSegment) and scrolls rigidly with the buildings. */
   ground = new THREE.Mesh(new THREE.PlaneGeometry(600, 700),
-    stdMat({ map: repeatTex('assets/tex-asphalt.jpg', 46, 46), color: 0x77815e, roughness: 1 }));
+    stdMat({ color: 0x77815e, roughness: 1 }));
   ground.rotation.x = -Math.PI / 2;
   ground.position.set(0, -0.06, -160);
   ground.receiveShadow = true;
@@ -962,6 +989,15 @@ function makeSegment(idx){
     var curb = box(0.3, 0.2, SEG_LEN, stdMat({ color: 0x8f8a7c, roughness: 1 }), s * 5.85, 0.04, 0);
     curb.castShadow = false;
     g.add(curb);
+    /* ground apron from the sidewalk out past the far buildings, a child
+       of THIS segment: it scrolls and recycles with the buildings, so no
+       layer of the street can slide against another */
+    var apron = new THREE.Mesh(new THREE.PlaneGeometry(31.7, SEG_LEN),
+      stdMat({ map: repeatTex('assets/tex-asphalt.jpg', 5, 3), color: 0x77815e, roughness: 1 }));
+    apron.rotation.x = -Math.PI / 2;
+    apron.position.set(s * 24.15, -0.02, 0);
+    apron.receiveShadow = true;
+    g.add(apron);
   });
   var bL = makeBuilding(false, 1); bL.position.set(-13.2, 0, rand(-4, 4)); g.add(bL);
   var bR = makeBuilding(false, -1); bR.position.set(13.2, 0, rand(-4, 4)); g.add(bR);
@@ -1003,6 +1039,7 @@ function initVehicles(){
 function respawnVehicle(v){
   v.userData.lane = randi(0, 2);
   v.userData.own = rand(5, 8.5);
+  v.userData.swerveX = undefined;
   var z = rand(-195, -160);
   for (var i = 0; i < vehicles.length; i++){
     var o = vehicles[i];
@@ -1010,19 +1047,58 @@ function respawnVehicle(v){
   }
   v.position.set(LANES[v.userData.lane], 0, z);
 }
+/* half length of each vehicle kind (contact distance) and the jump
+   height needed to clear it: a car can be jumped, a rickshaw with its
+   tall canopy cannot, so no state ever lets him pass through one */
+var VEH_HALF = { car: 1.95, rickshaw: 1.35 };
+var VEH_CLEAR = { car: 1.5, rickshaw: 2.05 };
 function updateVehicles(dt, baseSpeed, canHit){
   for (var i = 0; i < vehicles.length; i++){
     var v = vehicles[i];
     v.position.z += (baseSpeed + v.userData.own * vehOwnScale) * dt;
+    /* while he is down (a hit) or fallen (the final fall), traffic in
+       his lane queues behind the stopped vehicle that hit him and may
+       never sweep through the space he is lying in */
+    if ((state === 'down' || state === 'fall') && v.userData.swerveX !== undefined){
+      var swd = v.userData.swerveX - v.position.x;
+      v.position.x += clamp(swd, -dt * 2.4, dt * 2.4);
+    }
+    if ((state === 'down' || state === 'fall') && v.userData.lane === lane){
+      var lim = -(VEH_HALF[v.userData.kind] + 0.6);
+      for (var j = 0; j < vehicles.length; j++){
+        var o = vehicles[j];
+        if (o !== v && o.userData.lane === lane && o.userData.own === 0 && o.position.z > v.position.z){
+          lim = Math.min(lim, o.position.z - (VEH_HALF[o.userData.kind] + VEH_HALF[v.userData.kind] + 0.5));
+        }
+      }
+      if (v.position.z > lim) v.position.z = lim;
+    }
     if (v.position.z > 16){ respawnVehicle(v); continue; }
-    if (canHit && invulnT <= 0 && Math.abs(v.position.z) < 1.3 && v.userData.lane === lane && jumpY < 0.75){
-      onVehicleHit();
+    /* while he blinks back to his feet after a fall, his lane is kept
+       clear around him: nothing may stream through the space he is in */
+    if (canHit && invulnT > 0 && v.userData.lane === lane && v.position.z > -16 && v.position.z < 4){
+      respawnVehicle(v); continue;
+    }
+    if (canHit && invulnT <= 0 && v.userData.lane === lane &&
+        Math.abs(v.position.z) < VEH_HALF[v.userData.kind] + 0.3 && jumpY < VEH_CLEAR[v.userData.kind]){
+      onVehicleHit(v);
     }
   }
 }
-function onVehicleHit(){
+/* A hit puts him DOWN on the spot: he falls right there, loses exactly
+   one life, and (unless it was the last life) gets up after a beat and
+   runs on from the same spot. The vehicle that hit him brakes to a stop
+   just short of where he lies, so the two never overlap. */
+function onVehicleHit(v){
   lives--;
-  stumbleT = 0.7;
+  jumpY = 0; vy = 0;
+  if (v){
+    v.userData.own = 0;
+    v.position.z = -(VEH_HALF[v.userData.kind] + 0.6);
+    /* the driver jerks sideways as he brakes, so the fallen figure is
+       not hidden behind the vehicle that hit him */
+    v.userData.swerveX = v.position.x + (lane === 2 ? -1.5 : 1.5);
+  }
   invulnT = 1.5;
   updateHUD();
   var hf = el('hitFlash');
@@ -1033,7 +1109,12 @@ function onVehicleHit(){
     hf.style.opacity = '0';
   }); });
   if (lives <= 0) startFall();
-  else showToast('ধাক্কা খেলে! আর ' + lives + 'টা জীবন বাকি', 1500);
+  else {
+    state = 'down';
+    downT = 0;
+    player.userData.loco.target = 0;
+    showToast('পড়ে গেলে! আর ' + lives + 'টা জীবন বাকি', 1500);
+  }
 }
 /* ================= THE FALL =================
    Third hit: Imran goes down on the asphalt, traffic brakes to a stop,
@@ -1058,6 +1139,112 @@ function spawnFallPair(){
   c.position.set(playerX + 1.6, 0, -18.5);
   scene.add(c); fallPair.push(c);
 }
+/* ================= ROADSIDE DIALOGUE SPOT =================
+   A marked pad on the sidewalk shows exactly where the pair stands for
+   an encounter. While an encounter is live (person approaching or the
+   dialogue open) the spot-side lane is kept clear in a window around
+   the spot: any vehicle heading for it is moved to another lane long
+   before it arrives, so the road beside the pair stays empty and Imran
+   can walk to the spot and stand there safely. */
+function makeSpotMarker(){
+  var g = new THREE.Group();
+  var disc = new THREE.Mesh(new THREE.CircleGeometry(1.45, 28),
+    new THREE.MeshBasicMaterial({ color: 0xffd94d, transparent: true, opacity: 0.22, depthWrite: false }));
+  disc.rotation.x = -Math.PI / 2; disc.position.y = 0.01; g.add(disc);
+  var ring = new THREE.Mesh(new THREE.TorusGeometry(1.45, 0.07, 8, 36),
+    new THREE.MeshBasicMaterial({ color: 0xffd94d }));
+  ring.rotation.x = Math.PI / 2; ring.position.y = 0.03; g.add(ring);
+  var ring2 = new THREE.Mesh(new THREE.TorusGeometry(1.05, 0.045, 8, 32),
+    new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.75 }));
+  ring2.rotation.x = Math.PI / 2; ring2.position.y = 0.03; g.add(ring2);
+  g.position.set(SPOT_X, 0.15, SPOT_Z);
+  g.visible = false;
+  g.userData.ring = ring; g.userData.disc = disc;
+  scene.add(g);
+  return g;
+}
+function pulseSpot(now){
+  if (!spotMarker || !spotMarker.visible) return;
+  var p = 1 + Math.sin(now * 4) * 0.05;
+  spotMarker.userData.ring.scale.set(p, p, 1);
+  spotMarker.userData.disc.material.opacity = 0.19 + Math.sin(now * 4) * 0.05;
+}
+function spotPocketActive(){ return !!eventPerson || state === 'dialogue'; }
+function enforceSpotPocket(){
+  if (!spotPocketActive() || !spotMarker || !spotMarker.visible) return;
+  var sideLane = spotSide < 0 ? 0 : 2;
+  for (var i = 0; i < vehicles.length; i++){
+    var v = vehicles[i];
+    if (v.userData.lane === sideLane && v.position.z > SPOT_Z - 42 && v.position.z < SPOT_Z + 8){
+      var nl = (lane === 1) ? (spotSide < 0 ? 2 : 0) : 1;
+      v.userData.lane = nl;
+      v.position.x = LANES[nl];
+    }
+  }
+}
+/* ================= COINS =================
+   Gold coins spin in the lanes as he runs; running through one banks
+   exactly 1 taka into the separate coin counter. They are fixed to the
+   street (they scroll with the ground, never with traffic), and they
+   never spawn inside the dialogue spot pocket or inside a vehicle. */
+var coinTexCache = null;
+function makeCoin(){
+  if (!coinTexCache){
+    coinTexCache = textTexture(128, 128, function(ctx, w, h){
+      var g = ctx.createRadialGradient(44, 40, 6, 64, 64, 62);
+      g.addColorStop(0, '#ffe98a'); g.addColorStop(0.6, '#ffc933'); g.addColorStop(1, '#d9940d');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(64, 64, 62, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#a86e00'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(64, 64, 52, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = '#8a5a00'; ctx.font = 'bold 62px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('৳', 64, 86);
+    });
+  }
+  var g = new THREE.Group();
+  var cap = new THREE.MeshStandardMaterial({ map: coinTexCache, roughness: 0.3, metalness: 0.65 });
+  var rim = new THREE.MeshStandardMaterial({ color: 0xd9940d, roughness: 0.35, metalness: 0.8 });
+  var m = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.09, 22), [rim, cap, cap]);
+  m.rotation.x = Math.PI / 2;
+  g.add(m);
+  g.userData.spin = rand(0, Math.PI * 2);
+  return g;
+}
+function spawnCoinTrain(){
+  var ln = randi(0, 2), n = randi(4, 6), z0 = -188;
+  for (var i = 0; i < n; i++){
+    var z = z0 - i * 3.4;
+    /* never inside the dialogue spot pocket */
+    if (Math.abs(LANES[ln] - spotSide * SPOT_X) < 2.4 && Math.abs(z - SPOT_Z) < 6) continue;
+    /* never inside a vehicle */
+    var inVeh = false;
+    for (var j = 0; j < vehicles.length; j++){
+      if (vehicles[j].userData.lane === ln && Math.abs(vehicles[j].position.z - z) < 3) { inVeh = true; break; }
+    }
+    if (inVeh) continue;
+    var c = makeCoin();
+    c.position.set(LANES[ln], 0.95, z);
+    scene.add(c);
+    coins.push(c);
+  }
+}
+function clearCoins(){
+  coins.forEach(function(c){ scene.remove(c); });
+  coins = [];
+}
+function updateCoins(dt, scrollSpd, canCollect){
+  for (var i = coins.length - 1; i >= 0; i--){
+    var c = coins[i];
+    c.position.z += scrollSpd * dt;
+    c.userData.spin += dt * 4.2;
+    c.rotation.y = c.userData.spin;
+    c.position.y = 0.95 + Math.sin(c.userData.spin * 1.7) * 0.07;
+    if (c.position.z > 14){ scene.remove(c); coins.splice(i, 1); continue; }
+    if (canCollect && Math.abs(c.position.z) < 1.0 && Math.abs(c.position.x - playerX) < 0.9){
+      scene.remove(c); coins.splice(i, 1);
+      coinTaka += 1;
+      updateHUD();
+    }
+  }
+}
 function scrollSegments(spd, dt){
   worldScrollTotal += spd * dt;
   segments.forEach(function(seg){
@@ -1071,6 +1258,7 @@ function buildWorld(){
   buildWantedTexture();
   for (var si = 0; si < SEG_COUNT; si++) segments.push(makeSegment(si));
   initVehicles();
+  spotMarker = makeSpotMarker();
   player = makeFigure('imranback', 'imran');
   player.userData.loco.accel = 8.5;
   scene.add(player);
@@ -1108,6 +1296,7 @@ el('btnJump').addEventListener('click', doJump);
 /* ================= HUD AND LEDGER ================= */
 function updateHUD(){
   el('pointsVal').textContent = fmt(points);
+  el('coinVal').textContent = fmt(coinTaka) + ' টাকা';
   el('distVal').textContent = fmt(Math.floor(distance)) + ' মিটার';
   var lv = '';
   for (var li = 0; li < 3; li++) lv += li < lives ? '❤' : '🖤';
@@ -1159,7 +1348,13 @@ function spawnEventPerson(){
   currentEvent = nextEventData();
   var fig = makeFigure(currentEvent.run, currentEvent.cut);
   var side = Math.random() < 0.5 ? -1 : 1;
-  fig.position.set(side * 5.55, 0, -170);
+  /* the person waits on the marked roadside spot, on the sidewalk */
+  spotSide = side;
+  if (spotMarker){
+    spotMarker.position.set(side * SPOT_X, 0.15, SPOT_Z);
+    spotMarker.visible = true;
+  }
+  fig.position.set(side * SPOT_X, 0, -170);
   var ring = new THREE.Mesh(new THREE.TorusGeometry(0.85, 0.09, 8, 24), new THREE.MeshBasicMaterial({ color: 0xffd94d }));
   ring.rotation.x = Math.PI / 2; ring.position.y = 0.12;
   fig.add(ring); fig.userData.ring = ring;
@@ -1233,6 +1428,7 @@ el('takeBtn').addEventListener('click', function(){
 function finishDialogue(){
   el('dialogue').style.display = 'none';
   el('bubbleL').style.display = 'none'; el('bubbleR').style.display = 'none';
+  if (spotMarker) spotMarker.visible = false;
   if (player) player.visible = true;
   spawnChasers(currentEvent);
   currentEvent = null; dlg = null;
@@ -1303,8 +1499,10 @@ function doCaught(){
 /* ================= START AND RESET ================= */
 function resetGame(){
   points = 0; distance = 0; lives = 3;
+  coinTaka = 0; nextCoinAt = 120; clearCoins();
+  if (spotMarker) spotMarker.visible = false;
   fallPair.forEach(function(f){ scene.remove(f); });
-  fallPair = []; fallT = 0; vehOwnScale = 1;
+  fallPair = []; fallT = 0; downT = 0; vehOwnScale = 1;
   lane = 1; playerX = 0; prevPlayerX = 0; playerVX = 0; jumpY = 0; vy = 0; runTime = 0;
   stumbleT = 0; invulnT = 0; ledger = []; eventIndex = 0;
   nextEventAt = rand(250, 400); currentEvent = null; dlg = null; lastScamEvent = null;
@@ -1371,7 +1569,7 @@ function stepSim(dt){
       var target = cruise;
       var gap = null;
       if (eventPerson){
-        gap = -2.6 - eventPerson.position.z;
+        gap = SPOT_Z - eventPerson.position.z;
         if (gap < 14) target = Math.min(target, Math.max(0, gap * 1.4));
       }
       var pLoco = player.userData.loco;
@@ -1391,6 +1589,10 @@ function stepSim(dt){
       /* --- world scroll + oncoming traffic --- */
       scrollSegments(spd, dt);
       updateVehicles(dt, spd, true);
+      enforceSpotPocket();
+      updateCoins(dt, spd, true);
+      if (distance >= nextCoinAt){ spawnCoinTrain(); nextCoinAt = distance + rand(45, 85); }
+      pulseSpot(now);
       /* invincibility blink after a hit */
       player.visible = invulnT > 0 ? (Math.floor(now * 12) % 2 === 0) : true;
 
@@ -1401,7 +1603,7 @@ function stepSim(dt){
         var ringPulse = 1 + Math.sin(now * 5) * 0.07;
         if (eventPerson.userData.ring) eventPerson.userData.ring.scale.set(ringPulse, ringPulse, 1);
         updateFigure(eventPerson, dt, spd, false, 0, now);
-        gap = -2.6 - eventPerson.position.z;
+        gap = SPOT_Z - eventPerson.position.z;
         if (gap <= 0.15 && spd < 0.85){
           scene.remove(eventPerson); eventPerson = null;
           startDialogue();
@@ -1437,17 +1639,66 @@ function stepSim(dt){
       var flow = 8;
       scrollSegments(flow, dt);
       updateVehicles(dt, flow, false);
+      enforceSpotPocket();
+      updateCoins(dt, flow, false);
+      pulseSpot(now);
       chasers.forEach(function(c){
         c.userData.loco.target = 0;
         updateFigure(c, dt, 0, false, 0, now);
       });
     }
+    else if (state === 'down'){
+      /* knocked down by a vehicle: the world brakes to a stop around
+         him, he lies on the asphalt for a beat, then gets up on the
+         same spot and the run resumes (blink protection on resume) */
+      downT += dt;
+      player.visible = true;
+      vehOwnScale = clamp(1 - downT / 0.6, 0, 1);
+      /* the ground scrolls at HIS ground speed as he skids to a stop;
+         scaling it by vehOwnScale too would let the stopped vehicle
+         drift across the spot he fell on */
+      var dspd = player.userData.loco.speed;
+      scrollSegments(dspd, dt);
+      updateVehicles(dt, dspd, false);
+      updateCoins(dt, dspd, false);
+      updateFigure(player, dt, 0, false, 0, now);
+      var dk;
+      if (downT < 0.45){
+        dk = clamp(downT / 0.45, 0, 1);
+        player.userData.rig.rotation.x = -Math.PI / 2 * (1 - (1 - dk) * (1 - dk));
+      } else if (downT > 1.5){
+        dk = clamp((downT - 1.5) / 0.4, 0, 1);
+        player.userData.rig.rotation.x = -Math.PI / 2 * (1 - dk * dk);
+      } else {
+        player.userData.rig.rotation.x = -Math.PI / 2;
+      }
+      player.position.set(playerX, 0.03, 0);
+      if (downT >= 1.9){
+        /* the vehicle that hit him pulls over into the next lane, so
+           nothing is left sitting in his space when he stands up */
+        for (var vi = 0; vi < vehicles.length; vi++){
+          var vv = vehicles[vi];
+          if (vv.userData.own === 0 && vv.userData.lane === lane && Math.abs(vv.position.z) < 7){
+            var nl2 = lane > 0 ? lane - 1 : lane + 1;
+            vv.userData.lane = nl2;
+            vv.position.x = LANES[nl2];
+            vv.userData.own = rand(5, 8.5);
+          }
+        }
+        player.userData.rig.rotation.x = 0;
+        player.position.set(playerX, jumpY, 0);
+        vehOwnScale = 1;
+        invulnT = 1.5;
+        state = 'run';
+      }
+    }
     else if (state === 'fall'){
       fallT += dt;
       vehOwnScale = clamp(1 - fallT / 0.7, 0, 1);
-      var fspd = player.userData.loco.speed * vehOwnScale;
+      var fspd = player.userData.loco.speed;
       scrollSegments(fspd, dt);
       updateVehicles(dt, fspd, false);
+      updateCoins(dt, fspd, false);
       updateFigure(player, dt, 0, false, 0, now);
       var fk = clamp(fallT / 0.45, 0, 1);
       var fease = 1 - (1 - fk) * (1 - fk);
