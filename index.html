@@ -120,6 +120,54 @@ window.ASSETS2 = {"cut": {"imran": {"file": "data:image/webp;base64,UklGRq6XAABX
   #touchBtns button { pointer-events:auto; font-family:inherit; width:62px; height:62px; border-radius:50%; border:2px solid rgba(255,255,255,.4); background:rgba(8,12,28,.6); color:#fff; font-size:24px; font-weight:700; }
   #touchBtns .grp { display:flex; gap:12px; }
   @media (pointer:coarse) { #touchBtns.on { display:flex; } }
+
+  /* ---------- small screens (phones, portrait) ---------- */
+  @media (max-width: 480px) {
+    /* HUD: six boxes no longer squeeze into one overflowing row —
+       they shrink, the hearts stay on one line, and the row may wrap */
+    #hud { flex-wrap:wrap; gap:5px; padding:7px 7px; }
+    .hudBox { padding:4px 8px; border-radius:10px; }
+    #pointsBox { font-size:16px; }
+    #pointsBox small, #distBox small, #livesBox small, #coinBox small { font-size:10px; }
+    #stars { font-size:12.5px; letter-spacing:1px; white-space:nowrap; }
+    #livesBox { font-size:15px; }
+    #livesVal { font-size:14.5px; letter-spacing:1px; white-space:nowrap; }
+    #coinBox { font-size:15px; }
+    #coinVal { font-size:14.5px; white-space:nowrap; }
+    #distBox { font-size:15px; }
+    #distVal { white-space:nowrap; }
+    #ledgerBtn { font-size:13px; }
+    #ledgerPanel { top:118px; right:8px; }
+    #chaseBubble { bottom:26%; max-width:92vw; }
+    #toast { top:16%; max-width:92vw; }
+    /* title: everything fits a short phone screen without clipping */
+    #titleScreen { padding:10px 12px; }
+    #titleImg { height:min(29vh,300px); margin:6px 0 0; }
+    #controlsBox { margin-top:10px; padding:9px 12px; font-size:13.5px; line-height:1.55; }
+    .bigBtn { font-size:20px; padding:12px 30px; margin-top:10px; }
+    /* dialogue: slightly shorter figures leave headroom for the bubble */
+    .dlgChar { width:44vw; }
+    .dlgChar img { height:min(39vh,430px); }
+    .dlgChar .who { font-size:13.5px; padding:3px 11px; }
+    .bubble { width:min(79vw,350px); font-size:15px; padding:10px 12px; }
+    #trustWrap { padding:8px 4vw 12px; }
+    #takeBox { top:27%; padding:16px 18px; }
+    /* caught / BUSTED: the whole scene fits a short screen, no scroll */
+    #caught { padding-top:1.2vh; }
+    #caught h1 { font-size:clamp(40px,12vw,88px); }
+    .cChar.main img { height:min(32vh,370px); }
+    .cChar.side img { height:min(26vh,305px); }
+    #cPolice { margin-right:-30px; }
+    #cCatcher { margin-left:-30px; }
+    .cChar .who { font-size:12px; padding:2px 10px; }
+    .caughtLine { font-size:15.5px; padding:9px 14px 9px 42px; margin-top:9px; }
+    .cAvatar { width:44px; height:44px; left:-23px; }
+    .caughtLine { margin-left:23px; }
+    #caughtLedger { margin-top:9px; padding:9px 14px; }
+    #caughtLedger ul { font-size:14px; }
+    #touchBtns { bottom:10px; padding:0 12px; }
+    #touchBtns button { width:58px; height:58px; font-size:21px; }
+  }
 </style>
 </head>
 <body>
@@ -340,6 +388,46 @@ function genericScript(kind){
       L('p','আচ্ছা নিন, parcel টা যেন আজই পাই।')
     ];
   }
+  if (kind === 'recharge'){
+    return [
+      L('i','ভাই, বাঁচান আমাকে। আমার recharge এর দোকানের server টা হঠাৎ বন্ধ হয়ে গেছে, বাইরে customer চিৎকার করছে।'),
+      L('p','আমি কী করতে পারি ভাই? আমি তো এই পথ দিয়ে যাচ্ছিলাম।'),
+      L('i','আপনার card টা দুই মিনিটের জন্য দিন, পাশের machine এ recharge টা চালু করেই ফেরত দিচ্ছি। আপনি পাশে দাঁড়িয়েই থাকুন।'),
+      L('p','card দিয়ে recharge হয় নাকি আবার?'),
+      L('i','হয় ভাই, নতুন system। আপনি শুধু দেখুন, হাত দেব না বললেই হলো। দুই মিনিট, promise।'),
+      L('p','আচ্ছা নিন, কিন্তু আমি এখানেই দাঁড়িয়ে থাকব। তাড়াতাড়ি করুন।')
+    ];
+  }
+  if (kind === 'rent'){
+    return [
+      L('i','ভাই, একটু দাঁড়ান। বাড়িওয়ালা আমার বাসায় তালা মেরে দিয়েছে, বউ বাচ্চা বাইরে দাঁড়িয়ে আছে।'),
+      L('p','সে কী কথা! তালা মারল কেন?'),
+      L('i','এই মাসের ভাড়াটা আজই card এ পাঠাতে হবে, নইলে তালা খুলবে না। আমার card টা সকালে হারিয়ে ফেলেছি। আপনার card দিয়ে ভাড়াটা পাঠিয়ে দিন, কাল সকালে আমি cash ফেরত দিয়ে দেব।'),
+      L('p','আমার card দিয়ে আপনার ভাড়া? এইটা কেমন কথা?'),
+      L('i','ভাই, বাচ্চাগুলো রাস্তায় দাঁড়িয়ে কাঁদছে। মানুষ মানুষের জন্য। টাকা আপনি আমার হাত থেকেই ফেরত পাবেন, এই সামনের বাসাটাই আমার।'),
+      L('p','আচ্ছা আচ্ছা, এই নিন। বাচ্চাগুলোর কথা ভেবেই দিলাম। কাল সকালে কিন্তু টাকা চাই।')
+    ];
+  }
+  if (kind === 'hospital'){
+    return [
+      L('i','ভাই, আমার চাচাতো ভাই accident করে hospital এ পড়ে আছে। ওরা বলছে card এ deposit না দিলে operation শুরু করবে না।'),
+      L('p','আল্লাহ রহম করুন। আপনার নিজের card নাই?'),
+      L('i','আমার card এর limit শেষ ভাই, আগের চিকিৎসাতেই সব গেছে। আপনার card টা একবার ব্যবহার করলেই operation শুরু হবে, একটা জীবন বাঁচবে ভাই।'),
+      L('p','মানুষের জীবন বলে কথা। কিন্তু আমার card এর সব টাকা যদি কেটে নেয়?'),
+      L('i','শুধু deposit টুকুই কাটবে, বাকি টাকা আপনার account এই থাকবে। আমি নিজে আপনার সাথে counter পর্যন্ত যাব।'),
+      L('p','ঠিক আছে, এই নিন। আগে মানুষটাকে বাঁচান, টাকার হিসাব পরে হবে।')
+    ];
+  }
+  if (kind === 'business'){
+    return [
+      L('i','স্যার, একটা ব্যবসায়িক বিপদে পড়েছি। আমার মালের truck টা গোডাউনে আটকে রেখেছে supplier, টাকা না দিলে ছাড়বে না।'),
+      L('p','আমি তো আপনাকে চিনিই না ঠিকমতো। আমাকে বলছেন কেন?'),
+      L('i','আপনাকে দেখেই ভরসা হলো স্যার। আপনার card দিয়ে payment টা করলেই truck ছেড়ে দেবে, মাল বিক্রি হলেই লাভের দশ ভাগ আপনার। মাত্র এক ঘণ্টার ব্যাপার।'),
+      L('p','লাভের ভাগ? সত্যি বলছেন তো? আজকাল কাউকে বিশ্বাস করা যায় না।'),
+      L('i','আমার দোকানটা এই রাস্তার মোড়েই স্যার, পালাব কোথায়? card টা দিন, এক ঘণ্টায় টাকা আর লাভ দুটোই আপনার হাতে।'),
+      L('p','আচ্ছা নিন। এক ঘণ্টা পর আমি দোকানে আসব কিন্তু, মনে থাকে যেন।')
+    ];
+  }
   return [
     L('i', EMERGENCY_LINE),
     L('p','ভাবি অসুস্থ? আহারে, আগে বলবেন না। টাকা লাগলে আমিই দিতাম।'),
@@ -348,7 +436,23 @@ function genericScript(kind){
     L('i','তুমি নিশ্চিন্ত থাকো, সব ঠিক হয়ে যাবে। আমি এক্ষুনি আসছি।')
   ];
 }
-var GENERIC_KINDS = ['bank','lottery','courier','emergency'];
+var GENERIC_KINDS = ['bank','lottery','courier','emergency','recharge','rent','hospital','business'];
+/* Random-encounter scripts are dealt from a shuffled deck of every
+   variant, refilled only when empty (and never starting with the
+   script just used), so two neighbouring random encounters can
+   never run the same script back to back. */
+var scriptDeck = [], lastScriptId = null;
+function drawScript(){
+  if (!scriptDeck.length){
+    scriptDeck = shuffle(GENERIC_KINDS);
+    if (scriptDeck.length > 1 && scriptDeck[0] === lastScriptId){
+      var t = scriptDeck[0]; scriptDeck[0] = scriptDeck[1]; scriptDeck[1] = t;
+    }
+  }
+  var id = scriptDeck.shift();
+  lastScriptId = id;
+  return { script: id, lines: genericScript(id) };
+}
 
 /* ================= HELPERS ================= */
 function fmt(n){ return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
@@ -381,6 +485,16 @@ var coins = [], coinTaka = 0, nextCoinAt = 120;
 var scene = new THREE.Scene();
 scene.fog = new THREE.Fog(0xcfe0ee, 55, 215);
 var camera = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, 0.1, 900);
+/* portrait phones crop the road hard at the desktop FOV (the lanes and
+   buildings at the edges fall out of frame), so narrow screens get a
+   wider FOV; landscape/desktop keeps the original 62 */
+function applyCamFov(){
+  var a = innerWidth / innerHeight;
+  camera.aspect = a;
+  camera.fov = a < 0.8 ? 80 : 62;
+  camera.updateProjectionMatrix();
+}
+applyCamFov();
 var renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -419,8 +533,7 @@ scene.add(sun.target);
 })();
 
 addEventListener('resize', function(){
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
+  applyCamFov();
   renderer.setSize(innerWidth, innerHeight);
 });
 
@@ -553,7 +666,31 @@ function nameSprite(text){
   });
   var sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
   sp.scale.set(3.4, 0.85, 1);
+  sp.userData.ownTex = true; /* its canvas texture is private: dispose with it */
   return sp;
+}
+/* Release the GPU resources of a group being removed from the scene.
+   Per-spawn geometries and materials are disposed; anything marked
+   userData.shared (coin geometry/materials) is kept, and loader-cached
+   figure textures (the TEX cache in loadTex) are never disposed — only
+   private canvas textures (ownTex, i.e. name sprites) go with their owner.
+   Without this, every coin, figure and chaser leaked its geometry and
+   materials forever: renderer.info grew ~1.5 geometries per second of
+   play, and on a phone the GPU eventually refuses new uploads and the
+   texture-heavy WANTED boards render black. */
+function disposeGroup(root){
+  if (!root) return;
+  root.traverse(function(o){
+    if (o.geometry && !(o.geometry.userData && o.geometry.userData.shared)) o.geometry.dispose();
+    var mats = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : [];
+    for (var i = 0; i < mats.length; i++){
+      var m = mats[i];
+      if (m.userData && m.userData.shared) continue;
+      if (o.userData.ownTex && m.map) m.map.dispose();
+      m.dispose();
+    }
+    if (o.customDepthMaterial) o.customDepthMaterial.dispose();
+  });
 }
 var blobShadowTex = textTexture(128, 128, function(ctx, w, h){
   var g = ctx.createRadialGradient(64, 64, 6, 64, 64, 62);
@@ -1024,9 +1161,12 @@ function makeVehicle(z){
   var v = kind === 'rickshaw' ? makeRickshaw() : makeCar();
   if (kind === 'car') v.rotation.y = Math.PI; /* front toward the player */
   v.userData.kind = kind;
-  v.userData.lane = randi(0, 2);
-  v.userData.own = rand(5, 8.5);
-  v.position.set(LANES[v.userData.lane], 0, z);
+  v.userData.gov = 1;   /* fairness governor speed factor (see governTraffic) */
+  v.userData.govT = 1;
+  var slot = pickSpawnSlot(v, z, 16);
+  v.userData.lane = slot.lane;
+  v.userData.own = slot.own;
+  v.position.set(LANES[v.userData.lane], 0, slot.z);
   scene.add(v);
   vehicles.push(v);
   return v;
@@ -1037,25 +1177,122 @@ function initVehicles(){
   for (var i = 0; i < VEH_COUNT; i++) makeVehicle(rand(-185, -25));
 }
 function respawnVehicle(v){
-  v.userData.lane = randi(0, 2);
-  v.userData.own = rand(5, 8.5);
+  v.userData.gov = 1;
+  v.userData.govT = 1;
   v.userData.swerveX = undefined;
-  var z = rand(-195, -160);
-  for (var i = 0; i < vehicles.length; i++){
-    var o = vehicles[i];
-    if (o !== v && o.userData.lane === v.userData.lane && Math.abs(o.position.z - z) < 16) z = o.position.z - 18;
-  }
-  v.position.set(LANES[v.userData.lane], 0, z);
+  var spdRef = (player && player.userData.loco) ? player.userData.loco.speed : 16;
+  var slot = pickSpawnSlot(v, rand(-195, -160), spdRef);
+  v.userData.lane = slot.lane;
+  v.userData.own = slot.own;
+  v.position.set(LANES[v.userData.lane], 0, slot.z);
 }
 /* half length of each vehicle kind (contact distance) and the jump
    height needed to clear it: a car can be jumped, a rickshaw with its
    tall canopy cannot, so no state ever lets him pass through one */
 var VEH_HALF = { car: 1.95, rickshaw: 1.35 };
 var VEH_CLEAR = { car: 1.5, rickshaw: 2.05 };
+/* ================= FAIRNESS GOVERNOR =================
+   Traffic must NEVER form an unavoidable wall: if vehicles in all
+   three lanes were to reach the player within the same short window,
+   there would be no lane to dodge into and the hit would be forced.
+   The governor runs every sim step while running. For every vehicle
+   that has not yet cleared the player it computes the arrival time
+   (ETA) at the player plane from its current closing speed. If any
+   time window of GOV_TAU seconds would contain the first arrival of
+   every lane (a forming wall), the LAST of those arrivals is held
+   back: its engine speed factor (userData.gov) is eased down, which
+   pushes its ETA out of the window and dissolves the wall long
+   before it arrives. Because vehicles travel at different speeds
+   and can drift into alignment after spawning, this is re-checked
+   continuously, not only at spawn time. One- and two-lane blocks
+   are untouched, and a governed vehicle eases back to full speed
+   once it is no longer part of a forming wall, so the road keeps
+   its normal density and pressure. */
+var GOV_TAU = 0.85;      /* arrival window that counts as "at once" */
+var GOV_MIN = 0.45;      /* lowest engine factor a held vehicle drops to */
+function etaOfVeh(o, spdRef){
+  var c = spdRef + o.userData.own * (o.userData.gov || 1);
+  if (c < 0.5) return Infinity;
+  return o.position.z >= 0 ? 0 : -o.position.z / c;
+}
+/* Would a vehicle arriving in `lane` at time `eta` complete an
+   all-three-lanes arrival window with the vehicles already out
+   there? Used to keep spawns and respawns from dropping a fresh
+   vehicle straight into a forming wall. */
+function completesWall(lane, eta, spdRef, self){
+  var others = [[], [], []];
+  for (var i = 0; i < vehicles.length; i++){
+    var o = vehicles[i];
+    if (o === self) continue;
+    others[o.userData.lane].push(etaOfVeh(o, spdRef));
+  }
+  var rest = [0, 1, 2].filter(function(L){ return L !== lane; });
+  var A = others[rest[0]], B = others[rest[1]];
+  for (var a = 0; a < A.length; a++){
+    for (var b = 0; b < B.length; b++){
+      if (Math.max(eta, A[a], B[b]) - Math.min(eta, A[a], B[b]) <= GOV_TAU) return true;
+    }
+  }
+  return false;
+}
+/* Pick a (lane, own, z) spawn slot whose arrival cannot complete a
+   wall; if no sampled slot is clear, push the spawn back until its
+   arrival is later than every arrival already on the road. */
+function pickSpawnSlot(self, zBase, spdRef){
+  var laneTry = randi(0, 2), ownTry = rand(5, 8.5), zTry = zBase;
+  for (var t = 0; t < 14; t++){
+    laneTry = randi(0, 2); ownTry = rand(5, 8.5); zTry = zBase - t * 9;
+    var spaced = true;
+    for (var i = 0; i < vehicles.length; i++){
+      var o = vehicles[i];
+      if (o !== self && o.userData.lane === laneTry && Math.abs(o.position.z - zTry) < 16){ spaced = false; break; }
+    }
+    if (spaced && !completesWall(laneTry, -zTry / (spdRef + ownTry), spdRef, self)){
+      return { lane: laneTry, own: ownTry, z: zTry };
+    }
+  }
+  var maxEta = 0;
+  for (var j = 0; j < vehicles.length; j++){
+    if (vehicles[j] !== self) maxEta = Math.max(maxEta, etaOfVeh(vehicles[j], spdRef));
+  }
+  return { lane: laneTry, own: ownTry, z: -((maxEta + GOV_TAU + 0.6) * (spdRef + ownTry)) };
+}
+function governTraffic(dt, spd){
+  var list = [];
+  for (var i = 0; i < vehicles.length; i++){
+    var v = vehicles[i];
+    v.userData.govT = 1;
+    var half = VEH_HALF[v.userData.kind] + 0.3;
+    if (v.position.z > half) continue;          /* already past him */
+    var c = spd + v.userData.own * (v.userData.gov || 1);
+    if (c < 0.5) continue;
+    list.push({ v: v, lane: v.userData.lane, eta: v.position.z >= 0 ? 0 : -v.position.z / c });
+  }
+  list.sort(function(a, b){ return a.eta - b.eta; });
+  for (var a = 0; a < list.length; a++){
+    var first = {};   /* earliest arrival per lane inside this window */
+    for (var b = a; b < list.length && list[b].eta <= list[a].eta + GOV_TAU; b++){
+      if (!(list[b].lane in first)) first[list[b].lane] = list[b];
+    }
+    if (first[0] && first[1] && first[2]){
+      var victim = first[0];
+      if (first[1].eta > victim.eta) victim = first[1];
+      if (first[2].eta > victim.eta) victim = first[2];
+      victim.v.userData.govT = GOV_MIN;
+    }
+  }
+  for (var j = 0; j < vehicles.length; j++){
+    var u = vehicles[j];
+    var g = u.userData.gov || 1, t = u.userData.govT || 1;
+    if (g > t) g = Math.max(t, g - 2.2 * dt);        /* brake promptly */
+    else if (g < t) g = Math.min(t, g + 0.45 * dt);  /* ease back gently */
+    u.userData.gov = g;
+  }
+}
 function updateVehicles(dt, baseSpeed, canHit){
   for (var i = 0; i < vehicles.length; i++){
     var v = vehicles[i];
-    v.position.z += (baseSpeed + v.userData.own * vehOwnScale) * dt;
+    v.position.z += (baseSpeed + v.userData.own * (v.userData.gov || 1) * vehOwnScale) * dt;
     /* while he is down (a hit) or fallen (the final fall), traffic in
        his lane queues behind the stopped vehicle that hit him and may
        never sweep through the space he is lying in */
@@ -1188,6 +1425,7 @@ function enforceSpotPocket(){
    street (they scroll with the ground, never with traffic), and they
    never spawn inside the dialogue spot pocket or inside a vehicle. */
 var coinTexCache = null;
+var coinGeoShared = null, coinCapMat = null, coinRimMat = null;
 function makeCoin(){
   if (!coinTexCache){
     coinTexCache = textTexture(128, 128, function(ctx, w, h){
@@ -1200,9 +1438,18 @@ function makeCoin(){
     });
   }
   var g = new THREE.Group();
-  var cap = new THREE.MeshStandardMaterial({ map: coinTexCache, roughness: 0.3, metalness: 0.65 });
-  var rim = new THREE.MeshStandardMaterial({ color: 0xd9940d, roughness: 0.35, metalness: 0.8 });
-  var m = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.09, 22), [rim, cap, cap]);
+  /* one shared geometry + materials for every coin (marked shared so
+     disposeGroup never frees them): a coin used to allocate a fresh
+     cylinder and two materials, the biggest single leak in the game */
+  if (!coinGeoShared){
+    coinGeoShared = new THREE.CylinderGeometry(0.42, 0.42, 0.09, 22);
+    coinGeoShared.userData.shared = true;
+    coinCapMat = new THREE.MeshStandardMaterial({ map: coinTexCache, roughness: 0.3, metalness: 0.65 });
+    coinCapMat.userData.shared = true;
+    coinRimMat = new THREE.MeshStandardMaterial({ color: 0xd9940d, roughness: 0.35, metalness: 0.8 });
+    coinRimMat.userData.shared = true;
+  }
+  var m = new THREE.Mesh(coinGeoShared, [coinRimMat, coinCapMat, coinCapMat]);
   m.rotation.x = Math.PI / 2;
   g.add(m);
   g.userData.spin = rand(0, Math.PI * 2);
@@ -1227,7 +1474,7 @@ function spawnCoinTrain(){
   }
 }
 function clearCoins(){
-  coins.forEach(function(c){ scene.remove(c); });
+  coins.forEach(function(c){ scene.remove(c); disposeGroup(c); });
   coins = [];
 }
 function updateCoins(dt, scrollSpd, canCollect){
@@ -1237,9 +1484,9 @@ function updateCoins(dt, scrollSpd, canCollect){
     c.userData.spin += dt * 4.2;
     c.rotation.y = c.userData.spin;
     c.position.y = 0.95 + Math.sin(c.userData.spin * 1.7) * 0.07;
-    if (c.position.z > 14){ scene.remove(c); coins.splice(i, 1); continue; }
+    if (c.position.z > 14){ scene.remove(c); disposeGroup(c); coins.splice(i, 1); continue; }
     if (canCollect && Math.abs(c.position.z) < 1.0 && Math.abs(c.position.x - playerX) < 0.9){
-      scene.remove(c); coins.splice(i, 1);
+      scene.remove(c); disposeGroup(c); coins.splice(i, 1);
       coinTaka += 1;
       updateHUD();
     }
@@ -1333,16 +1580,21 @@ function showChaseBubble(){
 
 /* ================= EVENT FLOW ================= */
 function buildEventQueue(){
+  /* Locked order: Kaief, Ibrahim, Sumon, Azharul, Nokib, then MOBAROK
+     himself (the biggest card), then the random six in rotation, and
+     after the queue runs out, endless street people. */
   eventQueue = FIXED_EVENTS.slice();
-  shuffle(MID_EVENTS).forEach(function(m){
-    eventQueue.push({ id: m.id, name: m.name, bn: m.bn, cut: m.cut, run: m.run, amount: randi(3000, 30000), kind: 'টাকা', lines: genericScript(pick(GENERIC_KINDS)) });
-  });
   eventQueue.push(MOBAROK_EVENT);
+  shuffle(MID_EVENTS).forEach(function(m){
+    var s = drawScript();
+    eventQueue.push({ id: m.id, name: m.name, bn: m.bn, cut: m.cut, run: m.run, amount: randi(3000, 30000), kind: 'টাকা', script: s.script, lines: s.lines });
+  });
 }
 function nextEventData(){
   if (eventIndex < eventQueue.length) return eventQueue[eventIndex++];
   var rp = pick(RANDOM_PEOPLE);
-  return { id: 'random', name: rp.name, bn: rp.name, cut: rp.cut, run: rp.run, amount: randi(500, 15000), kind: 'টাকা', lines: genericScript(pick(GENERIC_KINDS)) };
+  var s = drawScript();
+  return { id: 'random', name: rp.name, bn: rp.name, cut: rp.cut, run: rp.run, amount: randi(500, 15000), kind: 'টাকা', script: s.script, lines: s.lines };
 }
 function spawnEventPerson(){
   currentEvent = nextEventData();
@@ -1373,9 +1625,9 @@ function startDialogue(){
   state = 'dialogue';
   /* the DOM pair carries the conversation; the in-world runner left standing
      mid-road reads as a stray mini Imran between the two speakers.
-     The pair stands at the ROADSIDE on the side the person came from;
-     traffic keeps flowing on the road beside them (see the dialogue
-     branch of stepSim) and can never reach them there. */
+     The pair stands at the ROADSIDE on the side the person came from,
+     and the whole world is frozen for the duration of the talk (see
+     the dialogue branch of stepSim), so nothing can reach them there. */
   dlgPairX = (eventPerson && eventPerson.position.x < 0) ? -6.6 : 6.6;
   if (player) player.visible = false;
   dlg = { ev: currentEvent, idx: -1, phase: 'talk' };
@@ -1453,7 +1705,7 @@ function spawnChasers(ev){
   chaseBubbleT = rand(4, 7);
 }
 function clearChasers(){
-  chasers.forEach(function(c){ scene.remove(c); });
+  chasers.forEach(function(c){ scene.remove(c); disposeGroup(c); });
   chasers = [];
 }
 
@@ -1501,12 +1753,12 @@ function resetGame(){
   points = 0; distance = 0; lives = 3;
   coinTaka = 0; nextCoinAt = 120; clearCoins();
   if (spotMarker) spotMarker.visible = false;
-  fallPair.forEach(function(f){ scene.remove(f); });
+  fallPair.forEach(function(f){ scene.remove(f); disposeGroup(f); });
   fallPair = []; fallT = 0; downT = 0; vehOwnScale = 1;
   lane = 1; playerX = 0; prevPlayerX = 0; playerVX = 0; jumpY = 0; vy = 0; runTime = 0;
   stumbleT = 0; invulnT = 0; ledger = []; eventIndex = 0;
   nextEventAt = rand(250, 400); currentEvent = null; dlg = null; lastScamEvent = null;
-  if (eventPerson){ scene.remove(eventPerson); eventPerson = null; }
+  if (eventPerson){ scene.remove(eventPerson); disposeGroup(eventPerson); eventPerson = null; }
   clearChasers();
   if (player){
     player.visible = true;
@@ -1588,8 +1840,9 @@ function stepSim(dt){
 
       /* --- world scroll + oncoming traffic --- */
       scrollSegments(spd, dt);
-      updateVehicles(dt, spd, true);
       enforceSpotPocket();
+      governTraffic(dt, spd);
+      updateVehicles(dt, spd, true);
       updateCoins(dt, spd, true);
       if (distance >= nextCoinAt){ spawnCoinTrain(); nextCoinAt = distance + rand(45, 85); }
       pulseSpot(now);
@@ -1605,7 +1858,7 @@ function stepSim(dt){
         updateFigure(eventPerson, dt, spd, false, 0, now);
         gap = SPOT_Z - eventPerson.position.z;
         if (gap <= 0.15 && spd < 0.85){
-          scene.remove(eventPerson); eventPerson = null;
+          scene.remove(eventPerson); disposeGroup(eventPerson); eventPerson = null;
           startDialogue();
         }
       }
@@ -1630,22 +1883,15 @@ function stepSim(dt){
       updateHUD();
     }
     else if (state === 'dialogue'){
-      /* The pair stands at the roadside and the world stays alive: the
-         road scrolls gently and oncoming traffic keeps streaming past
-         on the lanes beside them. Vehicles are confined to the lanes
-         (|x| <= 3.4 plus body width), the pair stands at |x| = 6.6,
-         so nothing can ever reach or hit them here. There is no risk
-         of any kind in this state. */
-      var flow = 8;
-      scrollSegments(flow, dt);
-      updateVehicles(dt, flow, false);
-      enforceSpotPocket();
-      updateCoins(dt, flow, false);
-      pulseSpot(now);
-      chasers.forEach(function(c){
-        c.userData.loco.target = 0;
-        updateFigure(c, dt, 0, false, 0, now);
-      });
+      /* FULL FREEZE — the user's absolute ruling: while Imran is talking
+         to someone, ALL game progress halts exactly as it is. The world
+         update is gated off structurally for this state: no scrolling,
+         no traffic movement, no coin motion, no collision checks, no
+         chaser movement, no distance gain. Only the DOM dialogue UI
+         advances (bubbles, trust bar, take box — all click-driven,
+         outside stepSim). When the conversation ends, the run resumes
+         from the exact frozen state, however long the talk lasted, so
+         nothing can ever reach or kill him mid-conversation. */
     }
     else if (state === 'down'){
       /* knocked down by a vehicle: the world brakes to a stop around
