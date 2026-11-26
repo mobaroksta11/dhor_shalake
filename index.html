@@ -28,9 +28,9 @@ window.ASSETS2 = {"cut": {"imran": {"file": "data:image/webp;base64,UklGRq6XAABX
   #livesBox { font-size:18px; font-weight:700; text-align:center; }
   #livesBox small { display:block; font-size:12px; color:#cfd8ff; font-weight:600; }
   #livesVal { color:#ff5252; letter-spacing:2px; font-size:17px; }
-  #coinBox { font-size:18px; font-weight:700; text-align:center; }
-  #coinBox small { display:block; font-size:12px; color:#cfd8ff; font-weight:600; }
-  #coinVal { color:#ffd94d; font-size:17px; }
+  #cardBox { font-size:18px; font-weight:700; text-align:center; }
+  #cardBox small { display:block; font-size:12px; color:#cfd8ff; font-weight:600; }
+  #cardVal { color:#7dd3fc; font-size:17px; }
   #hitFlash { position:fixed; inset:0; pointer-events:none; z-index:45; opacity:0; background:radial-gradient(ellipse at center, rgba(255,0,0,0) 42%, rgba(213,0,0,.55) 100%); }
   #ledgerBtn { cursor:pointer; font-family:inherit; color:#fff; font-size:15px; font-weight:700; }
   #ledgerPanel { position:fixed; top:140px; right:12px; width:min(300px,80vw); max-height:52vh; overflow-y:auto; background:rgba(8,12,28,.92); border:1px solid rgba(255,255,255,.22); border-radius:14px; padding:12px 14px; display:none; z-index:30; }
@@ -128,12 +128,12 @@ window.ASSETS2 = {"cut": {"imran": {"file": "data:image/webp;base64,UklGRq6XAABX
     #hud { flex-wrap:wrap; gap:5px; padding:7px 7px; }
     .hudBox { padding:4px 8px; border-radius:10px; }
     #pointsBox { font-size:16px; }
-    #pointsBox small, #distBox small, #livesBox small, #coinBox small { font-size:10px; }
+    #pointsBox small, #distBox small, #livesBox small, #cardBox small { font-size:10px; }
     #stars { font-size:12.5px; letter-spacing:1px; white-space:nowrap; }
     #livesBox { font-size:15px; }
     #livesVal { font-size:14.5px; letter-spacing:1px; white-space:nowrap; }
-    #coinBox { font-size:15px; }
-    #coinVal { font-size:14.5px; white-space:nowrap; }
+    #cardBox { font-size:15px; }
+    #cardVal { font-size:14.5px; white-space:nowrap; }
     #distBox { font-size:15px; }
     #distVal { white-space:nowrap; }
     #ledgerBtn { font-size:13px; }
@@ -178,7 +178,7 @@ window.ASSETS2 = {"cut": {"imran": {"file": "data:image/webp;base64,UklGRq6XAABX
   <div class="hudBox" id="pointsBox"><small>Points</small><span id="pointsVal">0</span></div>
   <div class="hudBox"><div id="stars">☆☆☆☆☆</div></div>
   <div class="hudBox" id="livesBox"><small>জীবন</small><span id="livesVal">❤❤❤</span></div>
-  <div class="hudBox" id="coinBox"><small>🪙 কয়েন</small><span id="coinVal">0 টাকা</span></div>
+  <div class="hudBox" id="cardBox"><small>💳 Credit Card</small><span id="cardVal">0</span></div>
   <div class="hudBox" id="distBox"><small>দূরত্ব</small><span id="distVal">0 মিটার</span></div>
   <button class="hudBox" id="ledgerBtn">📒 খাতা</button>
 </div>
@@ -206,7 +206,7 @@ window.ASSETS2 = {"cut": {"imran": {"file": "data:image/webp;base64,UklGRq6XAABX
     • লাফ দিতে Space অথবা ▲ চাপো<br>
     • মানুষের কাছে পৌঁছালে কথা শুরু হবে, click অথবা E চাপলে কথা এগিয়ে যাবে<br>
     • কথা বলে বিশ্বাস জিতলে টাকা মিলবে, যত বেশি টাকা তত বেশি Points<br>
-    • রাস্তার সোনার coin ছুঁলে ১টা করে coin টাকা জমবে<br>
+    • রাস্তার Credit Card ছুঁলে ১টা করে card জমবে, card এ আলাদা কোনো টাকা যোগ হয় না<br>
     • গাড়ি বা রিকশায় ধাক্কা খেলে পড়ে যাবে আর একটা জীবন কমবে, ৩টা জীবন শেষ হলেই ধরা<br>
     • phone এ swipe করো অথবা নিচের button চাপো
   </div>
@@ -479,7 +479,7 @@ var dlgPairX = 6.6, worldScrollTotal = 0, vehOwnScale = 1;
 /* roadside dialogue spot: the marked pad on the sidewalk where the pair
    stands, and the vehicle-free pocket guaranteed around it */
 var SPOT_Z = -2.6, SPOT_X = 6.6, spotSide = 1, spotMarker = null;
-var coins = [], coinTaka = 0, nextCoinAt = 120;
+var cards = [], cardCount = 0, nextCardAt = 120;
 
 /* ================= THREE SETUP ================= */
 var scene = new THREE.Scene();
@@ -671,10 +671,10 @@ function nameSprite(text){
 }
 /* Release the GPU resources of a group being removed from the scene.
    Per-spawn geometries and materials are disposed; anything marked
-   userData.shared (coin geometry/materials) is kept, and loader-cached
+   userData.shared (card geometry/materials) is kept, and loader-cached
    figure textures (the TEX cache in loadTex) are never disposed — only
    private canvas textures (ownTex, i.e. name sprites) go with their owner.
-   Without this, every coin, figure and chaser leaked its geometry and
+   Without this, every card, figure and chaser leaked its geometry and
    materials forever: renderer.info grew ~1.5 geometries per second of
    play, and on a phone the GPU eventually refuses new uploads and the
    texture-heavy WANTED boards render black. */
@@ -1419,43 +1419,83 @@ function enforceSpotPocket(){
     }
   }
 }
-/* ================= COINS =================
-   Gold coins spin in the lanes as he runs; running through one banks
-   exactly 1 taka into the separate coin counter. They are fixed to the
-   street (they scroll with the ground, never with traffic), and they
-   never spawn inside the dialogue spot pocket or inside a vehicle. */
-var coinTexCache = null;
-var coinGeoShared = null, coinCapMat = null, coinRimMat = null;
-function makeCoin(){
-  if (!coinTexCache){
-    coinTexCache = textTexture(128, 128, function(ctx, w, h){
-      var g = ctx.createRadialGradient(44, 40, 6, 64, 64, 62);
-      g.addColorStop(0, '#ffe98a'); g.addColorStop(0.6, '#ffc933'); g.addColorStop(1, '#d9940d');
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(64, 64, 62, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = '#a86e00'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(64, 64, 52, 0, Math.PI * 2); ctx.stroke();
-      ctx.fillStyle = '#8a5a00'; ctx.font = 'bold 62px sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText('৳', 64, 86);
+/* ================= CREDIT CARDS =================
+   Credit cards spin in the lanes as he runs (they replaced the old
+   road coins on Mobarok's ruling, 2026-11-27). Running through one
+   adds exactly 1 to the HUD card counter; cards carry NO taka value,
+   so a pickup never touches the scam Points total, which comes only
+   from what he takes off people. Same trains, same spawn pattern and
+   same collection radius the coins had. They are fixed to the street
+   (they scroll with the ground, never with traffic), and they never
+   spawn inside the dialogue spot pocket or inside a vehicle. */
+var cardTexCache = null;
+var cardGeoShared = null, cardFaceMat = null, cardEdgeMat = null;
+function makeCard(){
+  if (!cardTexCache){
+    cardTexCache = textTexture(256, 162, function(ctx, w, h){
+      /* the box face shows the whole canvas, so the corners outside
+         the rounded rect get the dark edge colour, not transparency */
+      ctx.fillStyle = '#141a3d'; ctx.fillRect(0, 0, w, h);
+      /* rounded-rect card face: deep blue to violet bank gradient */
+      var r = 18;
+      ctx.beginPath();
+      ctx.moveTo(r, 2); ctx.lineTo(w - r, 2); ctx.quadraticCurveTo(w - 2, 2, w - 2, r);
+      ctx.lineTo(w - 2, h - r); ctx.quadraticCurveTo(w - 2, h - 2, w - r, h - 2);
+      ctx.lineTo(r, h - 2); ctx.quadraticCurveTo(2, h - 2, 2, h - r);
+      ctx.lineTo(2, r); ctx.quadraticCurveTo(2, 2, r, 2); ctx.closePath();
+      var g = ctx.createLinearGradient(0, 0, w, h);
+      g.addColorStop(0, '#2743a6'); g.addColorStop(0.55, '#3b2f8f'); g.addColorStop(1, '#7c2d8e');
+      ctx.fillStyle = g; ctx.fill();
+      ctx.lineWidth = 4; ctx.strokeStyle = '#d7e3ff'; ctx.stroke();
+      ctx.save(); ctx.clip();
+      /* dark stripe band across the top, the way card art reads at speed */
+      ctx.fillStyle = 'rgba(8,10,26,0.88)'; ctx.fillRect(0, 0, w, 30);
+      ctx.fillStyle = '#ffd94d'; ctx.font = 'bold 17px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('BANK', 16, 21);
+      /* gold chip with its contact lines */
+      ctx.fillStyle = '#f5c542';
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(18, 52, 46, 34, 6); else ctx.rect(18, 52, 46, 34);
+      ctx.fill();
+      ctx.strokeStyle = '#9a7414'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(18, 69); ctx.lineTo(64, 69);
+      ctx.moveTo(41, 52); ctx.lineTo(41, 86);
+      ctx.stroke();
+      /* contactless waves beside the chip */
+      ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 3;
+      for (var k = 0; k < 3; k++){
+        ctx.beginPath(); ctx.arc(74, 69, 6 + k * 6, -0.9, 0.9); ctx.stroke();
+      }
+      /* card number dots and the CREDIT CARD label */
+      ctx.fillStyle = '#ffffff'; ctx.font = 'bold 21px monospace'; ctx.textAlign = 'left';
+      ctx.fillText('•••• •••• •••• 4539', 16, 122);
+      ctx.fillStyle = '#ffd94d'; ctx.font = 'bold 16px sans-serif';
+      ctx.fillText('CREDIT CARD', 16, 148);
+      ctx.textAlign = 'right'; ctx.fillStyle = '#ffffff';
+      ctx.fillText('VISA', 240, 148);
+      ctx.restore();
     });
   }
   var g = new THREE.Group();
-  /* one shared geometry + materials for every coin (marked shared so
-     disposeGroup never frees them): a coin used to allocate a fresh
-     cylinder and two materials, the biggest single leak in the game */
-  if (!coinGeoShared){
-    coinGeoShared = new THREE.CylinderGeometry(0.42, 0.42, 0.09, 22);
-    coinGeoShared.userData.shared = true;
-    coinCapMat = new THREE.MeshStandardMaterial({ map: coinTexCache, roughness: 0.3, metalness: 0.65 });
-    coinCapMat.userData.shared = true;
-    coinRimMat = new THREE.MeshStandardMaterial({ color: 0xd9940d, roughness: 0.35, metalness: 0.8 });
-    coinRimMat.userData.shared = true;
+  /* one shared geometry + materials for every card (marked shared so
+     disposeGroup never frees them): per-spawn geometry and materials
+     were the biggest single GPU leak in the game, so cards follow the
+     same shared-asset rule the coins ended with */
+  if (!cardGeoShared){
+    cardGeoShared = new THREE.BoxGeometry(1.1, 0.7, 0.05);
+    cardGeoShared.userData.shared = true;
+    cardFaceMat = new THREE.MeshStandardMaterial({ map: cardTexCache, roughness: 0.35, metalness: 0.25 });
+    cardFaceMat.userData.shared = true;
+    cardEdgeMat = new THREE.MeshStandardMaterial({ color: 0x1b2350, roughness: 0.5, metalness: 0.3 });
+    cardEdgeMat.userData.shared = true;
   }
-  var m = new THREE.Mesh(coinGeoShared, [coinRimMat, coinCapMat, coinCapMat]);
-  m.rotation.x = Math.PI / 2;
+  var m = new THREE.Mesh(cardGeoShared, [cardEdgeMat, cardEdgeMat, cardEdgeMat, cardEdgeMat, cardFaceMat, cardFaceMat]);
   g.add(m);
   g.userData.spin = rand(0, Math.PI * 2);
   return g;
 }
-function spawnCoinTrain(){
+function spawnCardTrain(){
   var ln = randi(0, 2), n = randi(4, 6), z0 = -188;
   for (var i = 0; i < n; i++){
     var z = z0 - i * 3.4;
@@ -1467,27 +1507,27 @@ function spawnCoinTrain(){
       if (vehicles[j].userData.lane === ln && Math.abs(vehicles[j].position.z - z) < 3) { inVeh = true; break; }
     }
     if (inVeh) continue;
-    var c = makeCoin();
+    var c = makeCard();
     c.position.set(LANES[ln], 0.95, z);
     scene.add(c);
-    coins.push(c);
+    cards.push(c);
   }
 }
-function clearCoins(){
-  coins.forEach(function(c){ scene.remove(c); disposeGroup(c); });
-  coins = [];
+function clearCards(){
+  cards.forEach(function(c){ scene.remove(c); disposeGroup(c); });
+  cards = [];
 }
-function updateCoins(dt, scrollSpd, canCollect){
-  for (var i = coins.length - 1; i >= 0; i--){
-    var c = coins[i];
+function updateCards(dt, scrollSpd, canCollect){
+  for (var i = cards.length - 1; i >= 0; i--){
+    var c = cards[i];
     c.position.z += scrollSpd * dt;
     c.userData.spin += dt * 4.2;
     c.rotation.y = c.userData.spin;
     c.position.y = 0.95 + Math.sin(c.userData.spin * 1.7) * 0.07;
-    if (c.position.z > 14){ scene.remove(c); disposeGroup(c); coins.splice(i, 1); continue; }
+    if (c.position.z > 14){ scene.remove(c); disposeGroup(c); cards.splice(i, 1); continue; }
     if (canCollect && Math.abs(c.position.z) < 1.0 && Math.abs(c.position.x - playerX) < 0.9){
-      scene.remove(c); disposeGroup(c); coins.splice(i, 1);
-      coinTaka += 1;
+      scene.remove(c); disposeGroup(c); cards.splice(i, 1);
+      cardCount += 1;
       updateHUD();
     }
   }
@@ -1543,7 +1583,7 @@ el('btnJump').addEventListener('click', doJump);
 /* ================= HUD AND LEDGER ================= */
 function updateHUD(){
   el('pointsVal').textContent = fmt(points);
-  el('coinVal').textContent = fmt(coinTaka) + ' টাকা';
+  el('cardVal').textContent = fmt(cardCount);
   el('distVal').textContent = fmt(Math.floor(distance)) + ' মিটার';
   var lv = '';
   for (var li = 0; li < 3; li++) lv += li < lives ? '❤' : '🖤';
@@ -1580,14 +1620,22 @@ function showChaseBubble(){
 
 /* ================= EVENT FLOW ================= */
 function buildEventQueue(){
-  /* Locked order: Kaief, Ibrahim, Sumon, Azharul, Nokib, then MOBAROK
-     himself (the biggest card), then the random six in rotation, and
-     after the queue runs out, endless street people. */
-  eventQueue = FIXED_EVENTS.slice();
-  eventQueue.push(MOBAROK_EVENT);
-  shuffle(MID_EVENTS).forEach(function(m){
+  /* NO fixed serial any more (Mobarok, 2026-11-27): the ENTIRE fixed
+     cast of 12 is shuffled and dealt in random order, each exactly
+     once — Kaief or Mobarok or anyone can come first. Only after all
+     12 have appeared does nextEventData fall through to the endless
+     street people. Every character keeps their own set amount/kind
+     and their own unique script; the random six draw from the script
+     deck as before. */
+  var cast = FIXED_EVENTS.slice();
+  cast.push(MOBAROK_EVENT);
+  MID_EVENTS.forEach(function(m){
+    cast.push({ id: m.id, name: m.name, bn: m.bn, cut: m.cut, run: m.run, generic: true });
+  });
+  eventQueue = shuffle(cast).map(function(ev){
+    if (!ev.generic) return ev;
     var s = drawScript();
-    eventQueue.push({ id: m.id, name: m.name, bn: m.bn, cut: m.cut, run: m.run, amount: randi(3000, 30000), kind: 'টাকা', script: s.script, lines: s.lines });
+    return { id: ev.id, name: ev.name, bn: ev.bn, cut: ev.cut, run: ev.run, amount: randi(3000, 30000), kind: 'টাকা', script: s.script, lines: s.lines };
   });
 }
 function nextEventData(){
@@ -1751,7 +1799,7 @@ function doCaught(){
 /* ================= START AND RESET ================= */
 function resetGame(){
   points = 0; distance = 0; lives = 3;
-  coinTaka = 0; nextCoinAt = 120; clearCoins();
+  cardCount = 0; nextCardAt = 120; clearCards();
   if (spotMarker) spotMarker.visible = false;
   fallPair.forEach(function(f){ scene.remove(f); disposeGroup(f); });
   fallPair = []; fallT = 0; downT = 0; vehOwnScale = 1;
@@ -1843,8 +1891,8 @@ function stepSim(dt){
       enforceSpotPocket();
       governTraffic(dt, spd);
       updateVehicles(dt, spd, true);
-      updateCoins(dt, spd, true);
-      if (distance >= nextCoinAt){ spawnCoinTrain(); nextCoinAt = distance + rand(45, 85); }
+      updateCards(dt, spd, true);
+      if (distance >= nextCardAt){ spawnCardTrain(); nextCardAt = distance + rand(45, 85); }
       pulseSpot(now);
       /* invincibility blink after a hit */
       player.visible = invulnT > 0 ? (Math.floor(now * 12) % 2 === 0) : true;
@@ -1886,7 +1934,7 @@ function stepSim(dt){
       /* FULL FREEZE — the user's absolute ruling: while Imran is talking
          to someone, ALL game progress halts exactly as it is. The world
          update is gated off structurally for this state: no scrolling,
-         no traffic movement, no coin motion, no collision checks, no
+         no traffic movement, no card motion, no collision checks, no
          chaser movement, no distance gain. Only the DOM dialogue UI
          advances (bubbles, trust bar, take box — all click-driven,
          outside stepSim). When the conversation ends, the run resumes
@@ -1906,7 +1954,7 @@ function stepSim(dt){
       var dspd = player.userData.loco.speed;
       scrollSegments(dspd, dt);
       updateVehicles(dt, dspd, false);
-      updateCoins(dt, dspd, false);
+      updateCards(dt, dspd, false);
       updateFigure(player, dt, 0, false, 0, now);
       var dk;
       if (downT < 0.45){
@@ -1944,7 +1992,7 @@ function stepSim(dt){
       var fspd = player.userData.loco.speed;
       scrollSegments(fspd, dt);
       updateVehicles(dt, fspd, false);
-      updateCoins(dt, fspd, false);
+      updateCards(dt, fspd, false);
       updateFigure(player, dt, 0, false, 0, now);
       var fk = clamp(fallT / 0.45, 0, 1);
       var fease = 1 - (1 - fk) * (1 - fk);
